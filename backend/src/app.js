@@ -1,10 +1,12 @@
 const express = require('express');
 const { verifyWebhookSignature } = require('./middleware/webhookAuth');
 const { verifyZafToken } = require('./middleware/zafAuth');
+const { verifyAdminToken } = require('./middleware/adminAuth');
 const webhookRouter = require('./routes/webhook');
 const ordersRouter = require('./routes/orders');
 const lookupRouter = require('./routes/lookup');
 const selectOrderRouter = require('./routes/selectOrder');
+const adminAuthRouter = require('./routes/admin/auth');
 
 function createApp() {
   const app = express();
@@ -23,6 +25,9 @@ function createApp() {
   app.use('/api/orders', verifyZafToken, ordersRouter);
   app.use('/api/lookup', verifyZafToken, lookupRouter);
   app.use('/api/select-order', verifyZafToken, selectOrderRouter);
+
+  // Admin routes (authenticated via Firebase token + email whitelist)
+  app.use('/api/admin/auth', verifyAdminToken, adminAuthRouter);
 
   return app;
 }
