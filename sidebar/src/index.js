@@ -12,6 +12,7 @@ var ui = require('./ui');
   var client = ZAFClient.init();
   var container = document.getElementById('app');
   var currentData = null;
+  var currentTicketId = null;
 
   // Resize app to fit content dynamically
   function resizeApp() {
@@ -63,7 +64,7 @@ var ui = require('./ui');
       var orderId = e.target.value;
       render(ui.renderLoading());
 
-      api.selectOrder(client, data.ticket_id, orderId)
+      api.selectOrder(client, currentTicketId, orderId)
         .then(function () {
           data.selected_order_id = orderId;
           renderApp(data);
@@ -91,6 +92,7 @@ var ui = require('./ui');
 
     client.get('ticket.id').then(function (ticketData) {
       var ticketId = String(ticketData['ticket.id']);
+      currentTicketId = ticketId;
 
       if (forceRefresh) {
         // Manual refresh: trigger backend lookup, then fetch cached data

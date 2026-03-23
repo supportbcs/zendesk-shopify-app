@@ -202,6 +202,7 @@
     var client = ZAFClient.init();
     var container = document.getElementById("app");
     var currentData = null;
+    var currentTicketId = null;
     function resizeApp() {
       var height = Math.max(document.body.scrollHeight, 80);
       client.invoke("resize", { width: "100%", height: height + "px" });
@@ -236,7 +237,7 @@
       select.addEventListener("change", function(e) {
         var orderId = e.target.value;
         render(ui.renderLoading());
-        api.selectOrder(client, data.ticket_id, orderId).then(function() {
+        api.selectOrder(client, currentTicketId, orderId).then(function() {
           data.selected_order_id = orderId;
           renderApp(data);
         }).catch(function() {
@@ -256,6 +257,7 @@
       render(ui.renderLoading());
       client.get("ticket.id").then(function(ticketData) {
         var ticketId = String(ticketData["ticket.id"]);
+        currentTicketId = ticketId;
         if (forceRefresh) {
           api.triggerLookup(client, ticketId).then(function(result) {
             if (result.error) {
