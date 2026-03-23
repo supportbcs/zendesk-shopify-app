@@ -17,6 +17,9 @@
       }
     }
   },
+  "domainWhitelist": [
+    "zendesk-shopify-backend-708001607351.europe-west4.run.app"
+  ],
   "parameters": [
     {
       "name": "backendUrl",
