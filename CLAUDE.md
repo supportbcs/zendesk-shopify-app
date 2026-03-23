@@ -46,14 +46,15 @@ npm test
 
 ### Deployment
 ```bash
-# Deploy backend + admin (admin/dist served statically)
-gcloud run deploy zendesk-shopify-backend --source backend/ --platform managed --region europe-west4
-
-# Required env vars on Cloud Run:
-# PORT, GCP_PROJECT_ID, SHOPIFY_API_VERSION, ZENDESK_SUBDOMAIN,
-# ZENDESK_EMAIL, ZENDESK_API_TOKEN, ZENDESK_WEBHOOK_SECRET,
-# ZENDESK_STORE_FIELD_ID, ZAF_SHARED_SECRET, FIREBASE_PROJECT_ID
+# Deploy backend from source (builds Docker image via Cloud Build)
+cd backend
+gcloud run deploy zendesk-shopify-backend --source . --region europe-west4 --project=bcs-internal \
+  --allow-unauthenticated \
+  --set-env-vars "GCP_PROJECT_ID=bcs-internal,SHOPIFY_API_VERSION=2025-01,ZENDESK_SUBDOMAIN=backbonecustomerservice,ZENDESK_EMAIL=zendesk@backbonecustomerservice.com,ZENDESK_STORE_FIELD_ID=18240308793116" \
+  --set-secrets "ZENDESK_API_TOKEN=zendesk-api-token:latest,ZENDESK_WEBHOOK_SECRET=zendesk-webhook-secret:latest,ZAF_SHARED_SECRET=zaf-shared-secret:latest"
 ```
+
+**Live URL:** `https://zendesk-shopify-backend-708001607351.europe-west4.run.app`
 
 ---
 
@@ -61,7 +62,7 @@ gcloud run deploy zendesk-shopify-backend --source backend/ --platform managed -
 
 ### Data Flow
 
-1. **Webhook path:** Zendesk ticket created → POST `/webhook/ticket-created` (HMAC-verified) → backend reads ticket email → fans out to all active stores → Shopify Admin API `/orders.json?email=` → results cached in Firestore `ticket_orders/` → Zendesk custom fields updated via REST API.
+1. **Webhook path:** Zendesk ticket created → trigger fires POST `/webhook/ticket-created` with `{"ticket_id": "..."}` (HMAC-verified) → backend reads ticket → extracts store name from dropdown field (tag format: `shop_name_<name>`) → looks up store in Firestore by tag → gets Shopify API token from Secret Manager → queries Shopify `/orders.json?email=` for all requester email identities (verified and unverified) → caches orders in Firestore `ticket_orders/` → updates Zendesk custom fields via REST API.
 
 2. **Sidebar path:** Agent opens ticket → ZAF app loads → GET `/api/orders?ticketId=X` (ZAF JWT auth) → backend returns cached orders → sidebar renders order selector. Agent can switch order (POST `/api/select-order`) or force refresh (POST `/api/lookup`).
 
@@ -71,7 +72,7 @@ gcloud run deploy zendesk-shopify-backend --source backend/ --platform managed -
 
 | Collection | Purpose |
 |------------|---------|
-| `stores/` | One doc per Shopify store; `secret_name` points to Secret Manager |
+| `stores/` | One doc per Shopify store; doc ID = Zendesk dropdown tag (e.g. `shop_name_chaps_herrenmode_de`); `secret_name` points to Secret Manager |
 | `field_mappings/` | Single `global` doc with array of Zendesk field → Shopify field mappings |
 | `ticket_orders/` | Per-ticket cache of matched orders + selected order ID |
 | `admin_users/` | Email whitelist for admin UI |
@@ -89,9 +90,9 @@ gcloud run deploy zendesk-shopify-backend --source backend/ --platform managed -
 
 Per-store Shopify API tokens are stored in **GCP Secret Manager**, not in Firestore. Each store doc has a `secret_name` field referencing its secret. The backend fetches secrets at runtime via the Secret Manager client — never hardcoded or logged.
 
-### Rate Limiting
+### Rate Limiting (Increment 4)
 
-Shopify enforces 2 req/sec per store. The backend uses an **in-memory per-store queue** (`rateLimiter.js`) to serialize requests. On webhook receipt for a ticket with multiple stores, requests are queued store-by-store.
+Shopify enforces 2 req/sec per store. The backend will use an **in-memory per-store queue** (`rateLimiter.js`) to serialize requests. Not yet implemented — planned for Increment 4.
 
 ---
 
@@ -107,11 +108,15 @@ Shopify enforces 2 req/sec per store. The backend uses an **in-memory per-store 
 
 ## Implementation Status
 
-**All four increments are in detailed planning docs** — no source code exists yet. Start with the plans in order:
-
-1. `docs/superpowers/plans/increment-1-backend-api.md` — Cloud Run backend + Firestore
-2. `docs/superpowers/plans/increment-2-zendesk-sidebar.md` — ZAF sidebar app
-3. `docs/superpowers/plans/increment-3-admin-web-ui.md` — React admin UI + admin API routes
-4. `docs/superpowers/plans/increment-4-production-hardening.md` — Rate limiting, cleanup, logging, health monitoring
+1. **Increment 1: Backend API** — COMPLETE, deployed, verified end-to-end (2026-03-23)
+2. **Increment 2: Zendesk Sidebar** — NOT STARTED → `docs/superpowers/plans/2026-03-22-increment-2-zendesk-sidebar.md`
+3. **Increment 3: Admin Web UI** — NOT STARTED → `docs/superpowers/plans/2026-03-22-increment-3-admin-web-ui.md`
+4. **Increment 4: Production Hardening** — NOT STARTED → `docs/superpowers/plans/2026-03-22-increment-4-production-hardening.md`
 
 The architecture spec is at `docs/superpowers/specs/2026-03-22-zendesk-shopify-integration-design.md`.
+
+## Important Conventions
+
+- **Store field tags:** The Zendesk "Shop name" dropdown uses tags like `shop_name_chaps_herrenmode_de`. Firestore `stores/` doc IDs must match these tags exactly.
+- **Email identities:** Include all Zendesk email identities (verified AND unverified) when looking up Shopify orders. Most inbound requesters are unverified.
+- **Secrets:** Per-store Shopify tokens go in Secret Manager as `shopify-<store-name>`. Zendesk/ZAF secrets are `zendesk-api-token`, `zendesk-webhook-secret`, `zaf-shared-secret`.
