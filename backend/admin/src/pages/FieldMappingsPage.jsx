@@ -44,7 +44,6 @@ export function FieldMappingsPage() {
       const res = await authFetch('/api/admin/field-mappings');
       const data = await res.json();
 
-      // Merge saved mappings with defaults
       const savedMap = {};
       (data.mappings || []).forEach(m => { savedMap[m.shopify_field] = m; });
 
@@ -92,49 +91,50 @@ export function FieldMappingsPage() {
     setSaving(false);
   };
 
-  if (loading) return <p>Loading field mappings...</p>;
+  if (loading) return <div className="loading">Loading field mappings...</div>;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>Field Mappings</h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {saved && <span style={{ color: '#038153', fontSize: 13 }}>Saved</span>}
-          <button onClick={handleSave} disabled={saving}
-            style={{ padding: '6px 16px', background: '#1f73b7', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', opacity: saving ? 0.6 : 1 }}>
+      <div className="page-header">
+        <h1>Field Mappings</h1>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          {saved && <span className="saved-indicator">Saved</span>}
+          <button onClick={handleSave} disabled={saving} className="btn btn-primary">
             {saving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
 
-      <p style={{ fontSize: 13, color: '#68737d', marginBottom: 16 }}>
+      <p className="page-description">
         Map Shopify fields to Zendesk custom field IDs. Toggle fields on/off to control which data is written to tickets.
       </p>
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: 4 }}>
-        <thead>
-          <tr style={{ background: '#f8f9f9', textAlign: 'left', fontSize: 12, color: '#68737d' }}>
-            <th style={{ padding: '8px 12px', width: 50 }}>On</th>
-            <th style={{ padding: '8px 12px' }}>Shopify Field</th>
-            <th style={{ padding: '8px 12px' }}>Zendesk Field ID</th>
-          </tr>
-        </thead>
-        <tbody>
-          {mappings.map((m, i) => (
-            <tr key={m.shopify_field} style={{ borderTop: '1px solid #e9ebed', opacity: m.enabled ? 1 : 0.5 }}>
-              <td style={{ padding: '8px 12px' }}>
-                <input type="checkbox" checked={m.enabled} onChange={() => handleToggle(i)} />
-              </td>
-              <td style={{ padding: '8px 12px', fontSize: 13 }}>{m.label}</td>
-              <td style={{ padding: '8px 12px' }}>
-                <input value={m.zendesk_field_id} onChange={e => handleFieldIdChange(i, e.target.value)}
-                  placeholder="e.g. 12345678" disabled={!m.enabled}
-                  style={{ padding: '4px 8px', border: '1px solid #d8dcde', borderRadius: 4, width: 140 }} />
-              </td>
+      <div className="card">
+        <table className="table">
+          <thead>
+            <tr>
+              <th style={{ width: 50 }}>On</th>
+              <th>Shopify Field</th>
+              <th>Zendesk Field ID</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {mappings.map((m, i) => (
+              <tr key={m.shopify_field} className={m.enabled ? '' : 'row-disabled'}>
+                <td>
+                  <input type="checkbox" checked={m.enabled} onChange={() => handleToggle(i)} />
+                </td>
+                <td>{m.label}</td>
+                <td>
+                  <input value={m.zendesk_field_id} onChange={e => handleFieldIdChange(i, e.target.value)}
+                    placeholder="e.g. 12345678" disabled={!m.enabled}
+                    className="field-input" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -23,29 +23,29 @@ function StoreForm({ initial, onSubmit, onCancel }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ background: '#fff', padding: 16, borderRadius: 4, border: '1px solid #d8dcde', marginBottom: 16 }}>
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Store Name</label>
+    <form onSubmit={handleSubmit} className="form-card">
+      <div className="form-group">
+        <label>Store Name</label>
         <input value={name} onChange={e => setName(e.target.value)} required disabled={!!initial}
-          style={{ width: '100%', padding: '6px 8px', border: '1px solid #d8dcde', borderRadius: 4, boxSizing: 'border-box' }} />
+          className="form-input" />
       </div>
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>Shopify Domain</label>
+      <div className="form-group">
+        <label>Shopify Domain</label>
         <input value={domain} onChange={e => setDomain(e.target.value)} required placeholder="store.myshopify.com"
-          style={{ width: '100%', padding: '6px 8px', border: '1px solid #d8dcde', borderRadius: 4, boxSizing: 'border-box' }} />
+          className="form-input" />
       </div>
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, marginBottom: 4 }}>
-          API Token {initial && '(leave blank to keep current)'}
+      <div className="form-group">
+        <label>
+          API Token {initial && <span className="hint">(leave blank to keep current)</span>}
         </label>
         <input value={token} onChange={e => setToken(e.target.value)} required={!initial} type="password"
-          style={{ width: '100%', padding: '6px 8px', border: '1px solid #d8dcde', borderRadius: 4, boxSizing: 'border-box' }} />
+          className="form-input" />
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button type="submit" style={{ padding: '6px 16px', background: '#1f73b7', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+      <div className="form-actions">
+        <button type="submit" className="btn btn-primary">
           {initial ? 'Update' : 'Add Store'}
         </button>
-        <button type="button" onClick={onCancel} style={{ padding: '6px 16px', background: '#fff', border: '1px solid #d8dcde', borderRadius: 4, cursor: 'pointer' }}>
+        <button type="button" onClick={onCancel} className="btn btn-secondary">
           Cancel
         </button>
       </div>
@@ -104,14 +104,13 @@ export function StoresPage() {
     }
   };
 
-  if (loading) return <p>Loading stores...</p>;
+  if (loading) return <div className="loading">Loading stores...</div>;
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h1 style={{ margin: 0, fontSize: 20 }}>Stores ({stores.length})</h1>
-        <button onClick={() => { setShowForm(true); setEditing(null); }}
-          style={{ padding: '6px 16px', background: '#1f73b7', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer' }}>
+      <div className="page-header">
+        <h1>Stores ({stores.length})</h1>
+        <button onClick={() => { setShowForm(true); setEditing(null); }} className="btn btn-primary">
           Add Store
         </button>
       </div>
@@ -119,40 +118,46 @@ export function StoresPage() {
       {showForm && <StoreForm onSubmit={handleAdd} onCancel={() => setShowForm(false)} />}
       {editing && <StoreForm initial={editing} onSubmit={handleEdit} onCancel={() => setEditing(null)} />}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: 4, overflow: 'hidden' }}>
-        <thead>
-          <tr style={{ background: '#f8f9f9', textAlign: 'left', fontSize: 12, color: '#68737d' }}>
-            <th style={{ padding: '8px 12px' }}>Health</th>
-            <th style={{ padding: '8px 12px' }}>Store Name</th>
-            <th style={{ padding: '8px 12px' }}>Domain</th>
-            <th style={{ padding: '8px 12px' }}>Last Sync</th>
-            <th style={{ padding: '8px 12px' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {stores.map(store => (
-            <tr key={store.id} style={{ borderTop: '1px solid #e9ebed' }}>
-              <td style={{ padding: '8px 12px' }}>
-                <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: healthColor(store) }} />
-              </td>
-              <td style={{ padding: '8px 12px', fontWeight: 500 }}>{store.store_name}</td>
-              <td style={{ padding: '8px 12px', fontSize: 13, color: '#68737d' }}>{store.shopify_domain}</td>
-              <td style={{ padding: '8px 12px', fontSize: 12, color: '#87929d' }}>
-                {store.last_successful_sync ? new Date(store.last_successful_sync).toLocaleString() : 'Never'}
-                {store.last_error && <div style={{ color: '#cc3340', fontSize: 11 }}>{store.last_error}</div>}
-              </td>
-              <td style={{ padding: '8px 12px' }}>
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  <button onClick={() => handleTest(store.id)} style={{ padding: '3px 8px', fontSize: 12, cursor: 'pointer', background: '#fff', border: '1px solid #d8dcde', borderRadius: 3 }}>Test</button>
-                  <button onClick={() => { setEditing(store); setShowForm(false); }} style={{ padding: '3px 8px', fontSize: 12, cursor: 'pointer', background: '#fff', border: '1px solid #d8dcde', borderRadius: 3 }}>Edit</button>
-                  <button onClick={() => handleDelete(store.id)} style={{ padding: '3px 8px', fontSize: 12, cursor: 'pointer', background: '#fff', border: '1px solid #cc3340', color: '#cc3340', borderRadius: 3 }}>Delete</button>
-                </div>
-                {testResult[store.id] && <div style={{ fontSize: 11, marginTop: 4, color: testResult[store.id].startsWith('Connected') ? '#038153' : '#cc3340' }}>{testResult[store.id]}</div>}
-              </td>
+      <div className="card">
+        <table className="table">
+          <thead>
+            <tr>
+              <th style={{ width: 50 }}></th>
+              <th>Store Name</th>
+              <th>Domain</th>
+              <th>Last Sync</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {stores.map(store => (
+              <tr key={store.id}>
+                <td>
+                  <span className="health-dot" style={{ background: healthColor(store) }} />
+                </td>
+                <td style={{ fontWeight: 500 }}>{store.store_name}</td>
+                <td className="text-muted text-sm">{store.shopify_domain}</td>
+                <td className="text-muted text-sm">
+                  {store.last_successful_sync ? new Date(store.last_successful_sync).toLocaleString() : 'Never'}
+                  {store.last_error && <div className="error-text">{store.last_error}</div>}
+                </td>
+                <td>
+                  <div className="action-buttons">
+                    <button onClick={() => handleTest(store.id)} className="btn btn-secondary btn-sm">Test</button>
+                    <button onClick={() => { setEditing(store); setShowForm(false); }} className="btn btn-secondary btn-sm">Edit</button>
+                    <button onClick={() => handleDelete(store.id)} className="btn btn-danger btn-sm">Delete</button>
+                  </div>
+                  {testResult[store.id] && (
+                    <div className={`test-result ${testResult[store.id].startsWith('Connected') ? 'success' : 'error'}`}>
+                      {testResult[store.id]}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
