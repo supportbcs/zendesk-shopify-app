@@ -4,6 +4,7 @@ const { verifyZafToken } = require('./middleware/zafAuth');
 const webhookRouter = require('./routes/webhook');
 const ordersRouter = require('./routes/orders');
 const lookupRouter = require('./routes/lookup');
+const selectOrderRouter = require('./routes/selectOrder');
 
 function createApp() {
   const app = express();
@@ -21,6 +22,7 @@ function createApp() {
   app.use('/webhook', verifyWebhookSignature, webhookRouter);
   app.use('/api/orders', verifyZafToken, ordersRouter);
   app.use('/api/lookup', verifyZafToken, lookupRouter);
+  app.use('/api/select-order', verifyZafToken, selectOrderRouter);
 
   return app;
 }
