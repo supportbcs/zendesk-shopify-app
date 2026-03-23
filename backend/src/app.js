@@ -9,6 +9,7 @@ const selectOrderRouter = require('./routes/selectOrder');
 const adminAuthRouter = require('./routes/admin/auth');
 const adminStoresRouter = require('./routes/admin/stores');
 const adminFieldMappingsRouter = require('./routes/admin/fieldMappings');
+const adminWebhookLogsRouter = require('./routes/admin/webhookLogs');
 
 function createApp() {
   const app = express();
@@ -32,6 +33,7 @@ function createApp() {
   app.use('/api/admin/auth', verifyAdminToken, adminAuthRouter);
   app.use('/api/admin/stores', verifyAdminToken, adminStoresRouter);
   app.use('/api/admin/field-mappings', verifyAdminToken, adminFieldMappingsRouter);
+  app.use('/api/admin/webhook-logs', verifyAdminToken, adminWebhookLogsRouter);
 
   return app;
 }
