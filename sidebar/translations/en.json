@@ -1,0 +1,8 @@
+{
+  "app": {
+    "name": "Shopify Order Data",
+    "short_description": "Displays Shopify order data in the ticket sidebar",
+    "long_description": "Pulls Shopify order data via the Backbone CS backend and displays it alongside Zendesk tickets. Replaces ChannelReply.",
+    "installation_instructions": "Enter the backend API URL (Cloud Run service URL) and the shared secret for JWT authentication."
+  }
+}
