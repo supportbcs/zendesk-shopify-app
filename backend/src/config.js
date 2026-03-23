@@ -10,4 +10,24 @@ const config = {
   zafSharedSecret: process.env.ZAF_SHARED_SECRET,
 };
 
+const REQUIRED = [
+  'GCP_PROJECT_ID',
+  'ZENDESK_SUBDOMAIN',
+  'ZENDESK_EMAIL',
+  'ZENDESK_API_TOKEN',
+  'ZENDESK_WEBHOOK_SECRET',
+  'ZENDESK_STORE_FIELD_ID',
+  'ZAF_SHARED_SECRET',
+];
+
+function validateConfig() {
+  const missing = REQUIRED.filter(key => !process.env[key]);
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(', ')}`
+    );
+  }
+}
+
 module.exports = config;
+module.exports.validateConfig = validateConfig;
