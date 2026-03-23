@@ -3,6 +3,8 @@ const firestore = require('../../firestore');
 const secretManager = require('../../services/secretManager');
 const shopifyClient = require('../../services/shopifyClient');
 const config = require('../../config');
+const { logger } = require('../../logger');
+const adminLogger = logger.child({ component: 'admin-stores' });
 
 const router = express.Router();
 
@@ -13,7 +15,7 @@ router.get('/', async (req, res) => {
     const stores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json({ stores });
   } catch (err) {
-    console.error('Failed to list stores:', err.message);
+    adminLogger.error('Failed to list stores', { error: err.message });
     res.status(500).json({ error: 'Failed to list stores' });
   }
 });
@@ -52,7 +54,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ id: docId, store_name, shopify_domain });
   } catch (err) {
-    console.error('Failed to create store:', err.message);
+    adminLogger.error('Failed to create store', { error: err.message });
     res.status(500).json({ error: 'Failed to create store' });
   }
 });
@@ -86,7 +88,7 @@ router.put('/:id', async (req, res) => {
 
     res.json({ id, ...updates });
   } catch (err) {
-    console.error('Failed to update store:', err.message);
+    adminLogger.error('Failed to update store', { error: err.message });
     res.status(500).json({ error: 'Failed to update store' });
   }
 });
@@ -111,7 +113,7 @@ router.delete('/:id', async (req, res) => {
 
     res.json({ status: 'deleted', id });
   } catch (err) {
-    console.error('Failed to delete store:', err.message);
+    adminLogger.error('Failed to delete store', { error: err.message });
     res.status(500).json({ error: 'Failed to delete store' });
   }
 });
