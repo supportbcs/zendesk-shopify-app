@@ -85,7 +85,7 @@ describe('Admin Stores API', () => {
 
       expect(res.status).toBe(201);
       expect(secretManager.createSecret).toHaveBeenCalledWith(
-        'shopify-newstore',
+        'shopify-shop_name_newstore',
         'shpat_new123'
       );
       expect(mockSet).toHaveBeenCalledWith(

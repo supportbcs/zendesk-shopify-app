@@ -109,8 +109,8 @@ Shopify enforces 2 req/sec per store. The backend will use an **in-memory per-st
 ## Implementation Status
 
 1. **Increment 1: Backend API** — COMPLETE, deployed, verified end-to-end (2026-03-23)
-2. **Increment 2: Zendesk Sidebar** — NOT STARTED → `docs/superpowers/plans/2026-03-22-increment-2-zendesk-sidebar.md`
-3. **Increment 3: Admin Web UI** — NOT STARTED → `docs/superpowers/plans/2026-03-22-increment-3-admin-web-ui.md`
+2. **Increment 2: Zendesk Sidebar** — COMPLETE, deployed, verified end-to-end (2026-03-23). Branch: `increment-2-zendesk-sidebar`
+3. **Increment 3: Admin Web UI** — COMPLETE, deployed, verified end-to-end (2026-03-23). Branch: `increment-3-admin-web-ui`
 4. **Increment 4: Production Hardening** — NOT STARTED → `docs/superpowers/plans/2026-03-22-increment-4-production-hardening.md`
 
 The architecture spec is at `docs/superpowers/specs/2026-03-22-zendesk-shopify-integration-design.md`.

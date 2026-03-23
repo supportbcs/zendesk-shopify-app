@@ -28,7 +28,8 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'store_name, shopify_domain, and api_token are required' });
   }
 
-  const docId = store_name.toLowerCase();
+  const tag = store_name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+  const docId = 'shop_name_' + tag;
 
   try {
     // Check if store already exists

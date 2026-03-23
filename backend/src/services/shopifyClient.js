@@ -29,10 +29,16 @@ function formatShippingAddress(addr) {
   return parts.filter(Boolean).join('\n');
 }
 
-function formatPaymentMethod(gatewayNames) {
+function formatPaymentMethod(gatewayNames, paymentMethodName) {
   if (!gatewayNames || gatewayNames.length === 0) return 'Unknown';
   const gateway = gatewayNames[0];
-  return GATEWAY_LABELS[gateway] || gateway.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const gatewayLabel = GATEWAY_LABELS[gateway] || gateway.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+  if (paymentMethodName && paymentMethodName !== gateway) {
+    const methodLabel = paymentMethodName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return `${gatewayLabel} (${methodLabel})`;
+  }
+  return gatewayLabel;
 }
 
 function normalizeOrder(order) {
@@ -56,7 +62,7 @@ function normalizeOrder(order) {
     tracking_companies: (order.fulfillments || [])
       .map(f => f.tracking_company)
       .filter(Boolean),
-    payment_method: formatPaymentMethod(order.payment_gateway_names),
+    payment_method: formatPaymentMethod(order.payment_gateway_names, order._payment_method_name),
     discount_codes: (order.discount_codes || []).map(d => ({
       code: d.code || '',
       amount: d.amount || '0',
@@ -86,35 +92,48 @@ function normalizeOrder(order) {
 }
 
 async function getOrdersByEmail({ shopifyDomain, apiToken, apiVersion, email, storeId }) {
-  const url = `https://${shopifyDomain}/admin/api/${apiVersion}/orders.json`;
-
-  // Use storeId for rate limiting; fall back to domain if not provided
+  const baseUrl = `https://${shopifyDomain}/admin/api/${apiVersion}`;
   const rateLimitKey = storeId || shopifyDomain;
+  const headers = {
+    'X-Shopify-Access-Token': apiToken,
+    'Content-Type': 'application/json',
+  };
 
-  return shopifyRateLimiter.schedule(rateLimitKey, async () => {
-    try {
-      const response = await axios.get(url, {
+  try {
+    // 1. Fetch orders list
+    const ordersResponse = await shopifyRateLimiter.schedule(rateLimitKey, () =>
+      axios.get(`${baseUrl}/orders.json`, {
         params: { email, status: 'any', limit: 50 },
-        headers: {
-          'X-Shopify-Access-Token': apiToken,
-          'Content-Type': 'application/json',
-        },
-      });
+        headers,
+      })
+    );
+    const orders = ordersResponse.data.orders || [];
 
-      // Record successful API call
-      if (storeId) {
-        await recordSuccess(storeId);
+    // 2. Fetch transactions per order to get specific payment method
+    await Promise.all(orders.map(async (order) => {
+      try {
+        const txResponse = await shopifyRateLimiter.schedule(rateLimitKey, () =>
+          axios.get(`${baseUrl}/orders/${order.id}/transactions.json`, { headers })
+        );
+        const transactions = txResponse.data.transactions || [];
+        const paymentTx = transactions.find(t =>
+          (t.kind === 'sale' || t.kind === 'capture') &&
+          t.status === 'success' &&
+          t.payment_details
+        );
+        order._payment_method_name = paymentTx?.payment_details?.payment_method_name || null;
+      } catch {
+        // If transaction fetch fails, fall back to gateway name only
+        order._payment_method_name = null;
       }
+    }));
 
-      return (response.data.orders || []).map(normalizeOrder);
-    } catch (err) {
-      // Record failed API call
-      if (storeId) {
-        await recordError(storeId, err.message);
-      }
-      throw err;
-    }
-  });
+    if (storeId) await recordSuccess(storeId);
+    return orders.map(normalizeOrder);
+  } catch (err) {
+    if (storeId) await recordError(storeId, err.message);
+    throw err;
+  }
 }
 
 module.exports = { getOrdersByEmail, normalizeOrder };

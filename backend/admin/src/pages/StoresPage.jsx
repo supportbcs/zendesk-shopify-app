@@ -60,6 +60,7 @@ export function StoresPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [testResult, setTestResult] = useState({});
+  const [actionError, setActionError] = useState(null);
 
   const loadStores = useCallback(async () => {
     setLoading(true);
@@ -76,7 +77,13 @@ export function StoresPage() {
   useEffect(() => { loadStores(); }, [loadStores]);
 
   const handleAdd = async (data) => {
-    await authFetch('/api/admin/stores', { method: 'POST', body: JSON.stringify(data) });
+    setActionError(null);
+    const res = await authFetch('/api/admin/stores', { method: 'POST', body: JSON.stringify(data) });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setActionError(err.error || 'Failed to add store');
+      return;
+    }
     setShowForm(false);
     loadStores();
   };
@@ -115,7 +122,8 @@ export function StoresPage() {
         </button>
       </div>
 
-      {showForm && <StoreForm onSubmit={handleAdd} onCancel={() => setShowForm(false)} />}
+      {actionError && <div className="error-text" style={{ padding: '8px 12px', marginBottom: 12 }}>{actionError}</div>}
+      {showForm && <StoreForm onSubmit={handleAdd} onCancel={() => { setShowForm(false); setActionError(null); }} />}
       {editing && <StoreForm initial={editing} onSubmit={handleEdit} onCancel={() => setEditing(null)} />}
 
       <div className="card">
@@ -139,7 +147,7 @@ export function StoresPage() {
                 <td className="text-muted text-sm">{store.shopify_domain}</td>
                 <td className="text-muted text-sm">
                   {store.last_successful_sync ? new Date(store.last_successful_sync).toLocaleString() : 'Never'}
-                  {store.last_error && <div className="error-text">{store.last_error}</div>}
+                  {store.last_error && <div className="error-text">{typeof store.last_error === 'object' ? store.last_error.message : store.last_error}</div>}
                 </td>
                 <td>
                   <div className="action-buttons">
