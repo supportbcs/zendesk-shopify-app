@@ -7,10 +7,10 @@
   // src/api.js
   var require_api = __commonJS({
     "src/api.js"(exports, module) {
-      function buildRequest(path, options) {
+      function buildRequest(baseUrl, path, options) {
         var opts = options || {};
         var req = {
-          url: "{{setting.backendUrl}}" + path,
+          url: baseUrl + path,
           type: opts.method || "GET",
           contentType: "application/json",
           headers: {
@@ -28,22 +28,22 @@
         }
         return req;
       }
-      function getOrders(client, ticketId) {
+      function getOrders(client, baseUrl, ticketId) {
         return client.request(
-          buildRequest("/api/orders?ticketId=" + encodeURIComponent(ticketId))
+          buildRequest(baseUrl, "/api/orders?ticketId=" + encodeURIComponent(ticketId))
         );
       }
-      function triggerLookup(client, ticketId) {
+      function triggerLookup(client, baseUrl, ticketId) {
         return client.request(
-          buildRequest("/api/lookup", {
+          buildRequest(baseUrl, "/api/lookup", {
             method: "POST",
             body: { ticketId: String(ticketId) }
           })
         );
       }
-      function selectOrder(client, ticketId, orderId) {
+      function selectOrder(client, baseUrl, ticketId, orderId) {
         return client.request(
-          buildRequest("/api/select-order", {
+          buildRequest(baseUrl, "/api/select-order", {
             method: "POST",
             body: { ticketId: String(ticketId), orderId: String(orderId) }
           })
@@ -138,19 +138,39 @@
         if (!order.tracking_numbers || order.tracking_numbers.length === 0) return "";
         var links = order.tracking_numbers.map(function(num, i) {
           var url = order.tracking_urls && order.tracking_urls[i];
+          var carrier = order.tracking_companies && order.tracking_companies[i];
+          var carrierPrefix = carrier ? escapeHtml(carrier) + ": " : "";
           if (url) {
-            return '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' + escapeHtml(num) + "</a>";
+            return carrierPrefix + '<a href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' + escapeHtml(num) + "</a>";
           }
-          return "<span>" + escapeHtml(num) + "</span>";
-        }).join(", ");
+          return carrierPrefix + "<span>" + escapeHtml(num) + "</span>";
+        }).join("<br>");
         return '<div class="field"><span class="label">Tracking</span><span class="value">' + links + "</span></div>";
       }
       function renderLineItems(items) {
         if (!items || items.length === 0) return "";
         var listItems = items.map(function(item) {
-          return "<li>" + escapeHtml(item.quantity) + "x " + escapeHtml(item.title) + "</li>";
+          var skuText = item.sku ? ' <span class="sku">[' + escapeHtml(item.sku) + "]</span>" : "";
+          return "<li>" + escapeHtml(item.quantity) + "x " + escapeHtml(item.title) + skuText + "</li>";
         }).join("");
         return '<div class="field"><span class="label">Products</span><ul class="product-list">' + listItems + "</ul></div>";
+      }
+      function renderDiscountCodes(codes) {
+        if (!codes || codes.length === 0) return "";
+        var items = codes.map(function(d) {
+          return escapeHtml(d.code) + " (" + escapeHtml(d.amount) + " " + escapeHtml(d.type) + ")";
+        }).join(", ");
+        return '<div class="field"><span class="label">Discounts</span><span class="value">' + items + "</span></div>";
+      }
+      function renderRefunds(refunds, currency) {
+        if (!refunds || refunds.length === 0) return "";
+        var items = refunds.map(function(r) {
+          var text = escapeHtml(r.amount) + " " + escapeHtml(currency);
+          if (r.reason) text += " \u2014 " + escapeHtml(r.reason);
+          text += " (" + formatDate(r.created_at) + ")";
+          return text;
+        }).join("<br>");
+        return '<div class="field"><span class="label">Refunds</span><span class="value refund">' + items + "</span></div>";
       }
       function renderOrderData(data) {
         if (!data.orders || data.orders.length === 0) {
@@ -161,10 +181,22 @@
           return o.shopify_order_id === selectedId;
         });
         if (!order) order = data.orders[0];
-        var shopifyUrl = "https://" + escapeHtml(data.shopify_domain) + "/admin/orders/" + escapeHtml(order.shopify_order_id);
+        var shopifyUrl = data.shopify_domain ? "https://" + escapeHtml(data.shopify_domain) + "/admin/orders/" + escapeHtml(order.shopify_order_id) : "";
+        var orderEmailHtml = "";
+        if (order.order_email) {
+          orderEmailHtml = '<div class="field"><span class="label">Order Email</span><span class="value">' + escapeHtml(order.order_email) + "</span></div>";
+        }
+        var orderPhoneHtml = "";
+        if (order.order_phone) {
+          orderPhoneHtml = '<div class="field"><span class="label">Phone</span><span class="value">' + escapeHtml(order.order_phone) + "</span></div>";
+        }
         var shippingHtml = "";
         if (order.shipping_address) {
           shippingHtml = '<div class="field"><span class="label">Shipping</span><span class="value address">' + escapeHtml(order.shipping_address).replace(/\n/g, "<br>") + "</span></div>";
+        }
+        var billingHtml = "";
+        if (order.billing_address && order.billing_address !== order.shipping_address) {
+          billingHtml = '<div class="field"><span class="label">Billing</span><span class="value address">' + escapeHtml(order.billing_address).replace(/\n/g, "<br>") + "</span></div>";
         }
         var tagsHtml = "";
         if (order.tags) {
@@ -174,7 +206,11 @@
         if (order.customer_note) {
           noteHtml = '<div class="field"><span class="label">Note</span><span class="value">&ldquo;' + escapeHtml(order.customer_note) + "&rdquo;</span></div>";
         }
-        return '<div class="sidebar-content"><div class="header"><h2>Shopify Order Data</h2><div class="field"><span class="label">Store</span><span class="value">' + escapeHtml(data.store_name) + '</span></div><div class="field"><span class="label">Customer</span><span class="value">' + escapeHtml((data.customer_emails || [])[0] || "") + "</span></div></div>" + renderOrderSelector(data.orders, order.shopify_order_id) + '<div class="order-details"><div class="field"><span class="label">Status</span><span class="value badge badge-' + escapeHtml(order.order_status) + '">' + escapeHtml(order.order_status) + '</span></div><div class="field"><span class="label">Payment</span><span class="value">' + escapeHtml(order.financial_status) + '</span></div><div class="field"><span class="label">Fulfillment</span><span class="value">' + escapeHtml(order.fulfillment_status) + '</span></div><div class="field"><span class="label">Total</span><span class="value">' + escapeHtml(order.total_price) + " " + escapeHtml(order.currency) + '</span></div><div class="field"><span class="label">Payment Method</span><span class="value">' + escapeHtml(order.payment_method) + '</span></div><div class="field"><span class="label">Date</span><span class="value">' + formatDate(order.created_at) + "</span></div>" + renderTrackingSection(order) + renderLineItems(order.line_items) + shippingHtml + tagsHtml + noteHtml + '</div><div class="actions"><button id="refresh-btn" class="c-btn">Refresh</button><a id="open-shopify" href="' + shopifyUrl + '" target="_blank" rel="noopener" class="c-btn c-btn--primary">Open in Shopify &#x2197;</a></div><div class="last-synced">Last synced: ' + formatTimeAgo(data.last_synced) + "</div></div>";
+        var customerLifetimeHtml = "";
+        if (order.customer_orders_count !== null && order.customer_orders_count !== void 0) {
+          customerLifetimeHtml = '<div class="field"><span class="label">Customer</span><span class="value">' + escapeHtml(order.customer_orders_count) + " orders, " + escapeHtml(order.customer_total_spent) + " " + escapeHtml(order.currency) + " total</span></div>";
+        }
+        return '<div class="sidebar-content"><div class="header"><h2>Shopify Order Data</h2><div class="field"><span class="label">Store</span><span class="value">' + escapeHtml(data.store_name) + '</span></div><div class="field"><span class="label">Customer</span><span class="value">' + escapeHtml((data.customer_emails || [])[0] || "") + "</span></div>" + customerLifetimeHtml + "</div>" + renderOrderSelector(data.orders, order.shopify_order_id) + '<div class="order-details"><div class="field"><span class="label">Order</span><span class="value">' + escapeHtml(order.order_name) + '</span></div><div class="field"><span class="label">Status</span><span class="value badge badge-' + escapeHtml(order.order_status) + '">' + escapeHtml(order.order_status) + '</span></div><div class="field"><span class="label">Payment</span><span class="value">' + escapeHtml(order.financial_status) + '</span></div><div class="field"><span class="label">Fulfillment</span><span class="value">' + escapeHtml(order.fulfillment_status) + '</span></div><div class="field"><span class="label">Total</span><span class="value">' + escapeHtml(order.total_price) + " " + escapeHtml(order.currency) + '</span></div><div class="field"><span class="label">Payment Method</span><span class="value">' + escapeHtml(order.payment_method) + "</span></div>" + renderDiscountCodes(order.discount_codes) + '<div class="field"><span class="label">Date</span><span class="value">' + formatDate(order.created_at) + "</span></div>" + orderEmailHtml + orderPhoneHtml + renderTrackingSection(order) + renderLineItems(order.line_items) + renderRefunds(order.refunds, order.currency) + shippingHtml + billingHtml + tagsHtml + noteHtml + '</div><div class="actions"><button id="refresh-btn" class="c-btn">Refresh</button>' + (shopifyUrl ? '<a id="open-shopify" href="' + shopifyUrl + '" target="_blank" rel="noopener" class="c-btn c-btn--primary">Open in Shopify &#x2197;</a>' : "") + '</div><div class="last-synced">Last synced: ' + formatTimeAgo(data.last_synced) + "</div></div>";
       }
       module.exports = {
         escapeHtml,
@@ -203,6 +239,7 @@
     var container = document.getElementById("app");
     var currentData = null;
     var currentTicketId = null;
+    var backendUrl = null;
     function resizeApp() {
       var height = Math.max(document.body.scrollHeight, 80);
       client.invoke("resize", { width: "100%", height: height + "px" });
@@ -237,7 +274,7 @@
       select.addEventListener("change", function(e) {
         var orderId = e.target.value;
         render(ui.renderLoading());
-        api.selectOrder(client, currentTicketId, orderId).then(function() {
+        api.selectOrder(client, backendUrl, currentTicketId, orderId).then(function() {
           data.selected_order_id = orderId;
           renderApp(data);
         }).catch(function() {
@@ -259,13 +296,13 @@
         var ticketId = String(ticketData["ticket.id"]);
         currentTicketId = ticketId;
         if (forceRefresh) {
-          api.triggerLookup(client, ticketId).then(function(result) {
+          api.triggerLookup(client, backendUrl, ticketId).then(function(result) {
             if (result.error) {
               render(ui.renderError("Lookup failed: " + result.error));
               attachRefreshHandler();
               return;
             }
-            return api.getOrders(client, ticketId);
+            return api.getOrders(client, backendUrl, ticketId);
           }).then(function(data) {
             if (data) renderApp(data);
           }).catch(function() {
@@ -274,21 +311,21 @@
           });
           return;
         }
-        api.getOrders(client, ticketId).then(function(data) {
+        api.getOrders(client, backendUrl, ticketId).then(function(data) {
           renderApp(data);
         }).catch(function(err) {
           if (err && err.status === 404) {
             poller.pollForOrders(
               function() {
-                return api.getOrders(client, ticketId);
+                return api.getOrders(client, backendUrl, ticketId);
               },
               { interval: 2e3, maxRetries: 5 }
             ).then(function(data) {
               renderApp(data);
             }).catch(function(pollErr) {
               if (pollErr.message === "max_retries") {
-                api.triggerLookup(client, ticketId).then(function() {
-                  return api.getOrders(client, ticketId);
+                api.triggerLookup(client, backendUrl, ticketId).then(function() {
+                  return api.getOrders(client, backendUrl, ticketId);
                 }).then(function(data) {
                   renderApp(data);
                 }).catch(function() {
@@ -307,6 +344,9 @@
         });
       });
     }
-    loadOrderData(false);
+    client.metadata().then(function(metadata) {
+      backendUrl = metadata.settings.backendUrl;
+      loadOrderData(false);
+    });
   })();
 })();

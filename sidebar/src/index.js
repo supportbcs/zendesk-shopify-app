@@ -13,6 +13,7 @@ var ui = require('./ui');
   var container = document.getElementById('app');
   var currentData = null;
   var currentTicketId = null;
+  var backendUrl = null;
 
   // Resize app to fit content dynamically
   function resizeApp() {
@@ -64,7 +65,7 @@ var ui = require('./ui');
       var orderId = e.target.value;
       render(ui.renderLoading());
 
-      api.selectOrder(client, currentTicketId, orderId)
+      api.selectOrder(client, backendUrl, currentTicketId, orderId)
         .then(function () {
           data.selected_order_id = orderId;
           renderApp(data);
@@ -96,14 +97,14 @@ var ui = require('./ui');
 
       if (forceRefresh) {
         // Manual refresh: trigger backend lookup, then fetch cached data
-        api.triggerLookup(client, ticketId)
+        api.triggerLookup(client, backendUrl, ticketId)
           .then(function (result) {
             if (result.error) {
               render(ui.renderError('Lookup failed: ' + result.error));
               attachRefreshHandler();
               return;
             }
-            return api.getOrders(client, ticketId);
+            return api.getOrders(client, backendUrl, ticketId);
           })
           .then(function (data) {
             if (data) renderApp(data);
@@ -116,7 +117,7 @@ var ui = require('./ui');
       }
 
       // Normal load: try cached data, poll if not ready, fallback to live lookup
-      api.getOrders(client, ticketId)
+      api.getOrders(client, backendUrl, ticketId)
         .then(function (data) {
           renderApp(data);
         })
@@ -124,7 +125,7 @@ var ui = require('./ui');
           if (err && err.status === 404) {
             // No cached data yet — poll (webhook may still be processing)
             poller.pollForOrders(
-              function () { return api.getOrders(client, ticketId); },
+              function () { return api.getOrders(client, backendUrl, ticketId); },
               { interval: 2000, maxRetries: 5 }
             )
               .then(function (data) {
@@ -133,9 +134,9 @@ var ui = require('./ui');
               .catch(function (pollErr) {
                 if (pollErr.message === 'max_retries') {
                   // Last resort: trigger a live lookup
-                  api.triggerLookup(client, ticketId)
+                  api.triggerLookup(client, backendUrl, ticketId)
                     .then(function () {
-                      return api.getOrders(client, ticketId);
+                      return api.getOrders(client, backendUrl, ticketId);
                     })
                     .then(function (data) {
                       renderApp(data);
@@ -158,5 +159,9 @@ var ui = require('./ui');
   }
 
   // -- Start --
-  loadOrderData(false);
+  // Get backendUrl from app settings (non-secure params via metadata), then load data
+  client.metadata().then(function (metadata) {
+    backendUrl = metadata.settings.backendUrl;
+    loadOrderData(false);
+  });
 })();

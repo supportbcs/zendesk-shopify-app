@@ -92,6 +92,17 @@ body {
   padding: 2px 0;
 }
 
+/* SKU labels */
+.sku {
+  color: #87929d;
+  font-size: 11px;
+}
+
+/* Refund values */
+.value.refund {
+  color: #cc3340;
+}
+
 /* Tracking links */
 .field a {
   color: #1f73b7;

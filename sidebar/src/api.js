@@ -1,7 +1,7 @@
-function buildRequest(path, options) {
+function buildRequest(baseUrl, path, options) {
   var opts = options || {};
   var req = {
-    url: '{{setting.backendUrl}}' + path,
+    url: baseUrl + path,
     type: opts.method || 'GET',
     contentType: 'application/json',
     headers: {
@@ -22,24 +22,24 @@ function buildRequest(path, options) {
   return req;
 }
 
-function getOrders(client, ticketId) {
+function getOrders(client, baseUrl, ticketId) {
   return client.request(
-    buildRequest('/api/orders?ticketId=' + encodeURIComponent(ticketId))
+    buildRequest(baseUrl, '/api/orders?ticketId=' + encodeURIComponent(ticketId))
   );
 }
 
-function triggerLookup(client, ticketId) {
+function triggerLookup(client, baseUrl, ticketId) {
   return client.request(
-    buildRequest('/api/lookup', {
+    buildRequest(baseUrl, '/api/lookup', {
       method: 'POST',
       body: { ticketId: String(ticketId) },
     })
   );
 }
 
-function selectOrder(client, ticketId, orderId) {
+function selectOrder(client, baseUrl, ticketId, orderId) {
   return client.request(
-    buildRequest('/api/select-order', {
+    buildRequest(baseUrl, '/api/select-order', {
       method: 'POST',
       body: { ticketId: String(ticketId), orderId: String(orderId) },
     })

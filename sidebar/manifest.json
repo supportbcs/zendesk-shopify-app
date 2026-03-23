@@ -24,7 +24,6 @@
     {
       "name": "backendUrl",
       "type": "text",
-      "secure": true,
       "required": true
     },
     {

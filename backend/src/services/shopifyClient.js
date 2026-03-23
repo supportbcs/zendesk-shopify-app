@@ -43,21 +43,42 @@ function normalizeOrder(order) {
     total_price: order.total_price,
     currency: order.currency,
     created_at: order.created_at,
+    order_email: order.email || '',
+    order_phone: order.phone || '',
     tracking_numbers: (order.fulfillments || [])
       .map(f => f.tracking_number)
       .filter(Boolean),
     tracking_urls: (order.fulfillments || [])
       .map(f => f.tracking_url)
       .filter(Boolean),
+    tracking_companies: (order.fulfillments || [])
+      .map(f => f.tracking_company)
+      .filter(Boolean),
     payment_method: formatPaymentMethod(order.payment_gateway_names),
+    discount_codes: (order.discount_codes || []).map(d => ({
+      code: d.code || '',
+      amount: d.amount || '0',
+      type: d.type || '',
+    })),
+    refunds: (order.refunds || []).map(r => ({
+      amount: (r.transactions || [])
+        .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0)
+        .toFixed(2),
+      reason: r.note || '',
+      created_at: r.created_at || '',
+    })),
     tags: order.tags || '',
     customer_note: order.note || '',
     shipping_address: formatShippingAddress(order.shipping_address),
+    billing_address: formatShippingAddress(order.billing_address),
+    customer_orders_count: order.customer && order.customer.orders_count != null ? order.customer.orders_count : null,
+    customer_total_spent: order.customer && order.customer.total_spent != null ? order.customer.total_spent : null,
     line_items: (order.line_items || []).map(item => ({
       title: [item.title, item.variant_title].filter(Boolean).join(' (') +
         (item.variant_title ? ')' : ''),
       sku: item.sku || '',
       quantity: item.quantity,
+      fulfillment_status: item.fulfillment_status || 'unfulfilled',
     })),
   };
 }
