@@ -1,6 +1,19 @@
+jest.mock('../../src/services/rateLimiter', () => ({
+  shopifyRateLimiter: {
+    schedule: jest.fn((storeId, fn) => fn()),
+  },
+}));
+
+jest.mock('../../src/services/storeHealthService', () => ({
+  recordSuccess: jest.fn().mockResolvedValue(),
+  recordError: jest.fn().mockResolvedValue(),
+}));
+
 jest.mock('axios');
 const axios = require('axios');
 const { getOrdersByEmail } = require('../../src/services/shopifyClient');
+const { shopifyRateLimiter } = require('../../src/services/rateLimiter');
+const storeHealthService = require('../../src/services/storeHealthService');
 
 const SHOPIFY_ORDER = {
   id: 6001234567890,
@@ -130,5 +143,35 @@ describe('shopifyClient', () => {
     });
 
     expect(orders).toEqual([]);
+  });
+
+  test('records success on store health after successful API call', async () => {
+    axios.get.mockResolvedValue({ data: { orders: [] } });
+
+    await getOrdersByEmail({
+      shopifyDomain: 'test.myshopify.com',
+      apiToken: 'token',
+      apiVersion: '2025-01',
+      email: 'test@example.com',
+      storeId: 'teststore',
+    });
+
+    expect(storeHealthService.recordSuccess).toHaveBeenCalledWith('teststore');
+  });
+
+  test('records error on store health after failed API call', async () => {
+    axios.get.mockRejectedValue(new Error('Request failed'));
+
+    await expect(
+      getOrdersByEmail({
+        shopifyDomain: 'test.myshopify.com',
+        apiToken: 'token',
+        apiVersion: '2025-01',
+        email: 'test@example.com',
+        storeId: 'teststore',
+      })
+    ).rejects.toThrow('Request failed');
+
+    expect(storeHealthService.recordError).toHaveBeenCalledWith('teststore', 'Request failed');
   });
 });

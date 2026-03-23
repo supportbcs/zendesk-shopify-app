@@ -5,6 +5,8 @@ const secretManager = require('./secretManager');
 const shopifyClient = require('./shopifyClient');
 const fieldMappingService = require('./fieldMappingService');
 const orderCacheService = require('./orderCacheService');
+const { logger } = require('../logger');
+const lookupLogger = logger.child({ component: 'lookup' });
 
 async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) {
   const ticket = await zendeskClient.getTicket(ticketId);
@@ -30,6 +32,7 @@ async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) 
       apiToken,
       apiVersion: config.shopifyApiVersion,
       email,
+      storeId: store.id,
     });
     for (const order of orders) {
       orderMap.set(order.shopify_order_id, order);
