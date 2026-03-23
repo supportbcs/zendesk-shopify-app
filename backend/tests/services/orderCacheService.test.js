@@ -46,6 +46,7 @@ describe('orderCacheService', () => {
     await cacheOrders({
       ticketId: '98765',
       storeName: 'SolitSocks',
+      shopifyDomain: 'solitsocks.myshopify.com',
       customerEmails: ['john@example.com'],
       orders,
     });
@@ -54,6 +55,7 @@ describe('orderCacheService', () => {
       expect.objectContaining({
         ticket_id: '98765',
         store_name: 'SolitSocks',
+        shopify_domain: 'solitsocks.myshopify.com',
         customer_emails: ['john@example.com'],
         selected_order_id: '123',
         orders,

@@ -42,6 +42,7 @@ async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) 
   await orderCacheService.cacheOrders({
     ticketId: String(ticketId),
     storeName: store.store_name,
+    shopifyDomain: store.shopify_domain,
     customerEmails,
     orders: allOrders,
   });

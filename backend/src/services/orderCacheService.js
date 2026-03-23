@@ -6,13 +6,14 @@ async function getCachedOrders(ticketId) {
   return doc.data();
 }
 
-async function cacheOrders({ ticketId, storeName, customerEmails, orders }) {
+async function cacheOrders({ ticketId, storeName, shopifyDomain, customerEmails, orders }) {
   const selectedOrderId = orders.length > 0 ? orders[0].shopify_order_id : null;
 
   await firestore.collection('ticket_orders').doc(String(ticketId)).set(
     {
       ticket_id: String(ticketId),
       store_name: storeName,
+      shopify_domain: shopifyDomain || null,
       customer_emails: customerEmails,
       selected_order_id: selectedOrderId,
       last_synced: new Date().toISOString(),
