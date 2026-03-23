@@ -30,7 +30,7 @@ async function getUserEmails(userId) {
   const response = await axios.get(`${base}/users/${userId}/identities.json`, { auth });
   const identities = response.data.identities || [];
   return identities
-    .filter(i => i.type === 'email' && i.verified)
+    .filter(i => i.type === 'email')
     .map(i => i.value);
 }
 

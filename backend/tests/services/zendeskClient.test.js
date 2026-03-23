@@ -57,7 +57,7 @@ describe('zendeskClient', () => {
   });
 
   describe('getUserEmails', () => {
-    test('returns all verified emails', async () => {
+    test('returns all email identities', async () => {
       axios.get.mockResolvedValue({
         data: {
           user: {
@@ -66,7 +66,7 @@ describe('zendeskClient', () => {
           },
           identities: [
             { type: 'email', value: 'john@example.com', verified: true },
-            { type: 'email', value: 'john.doe@work.com', verified: true },
+            { type: 'email', value: 'john.doe@work.com', verified: false },
           ],
         },
       });
