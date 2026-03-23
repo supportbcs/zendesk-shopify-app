@@ -7,6 +7,7 @@ const ordersRouter = require('./routes/orders');
 const lookupRouter = require('./routes/lookup');
 const selectOrderRouter = require('./routes/selectOrder');
 const adminAuthRouter = require('./routes/admin/auth');
+const adminStoresRouter = require('./routes/admin/stores');
 
 function createApp() {
   const app = express();
@@ -28,6 +29,7 @@ function createApp() {
 
   // Admin routes (authenticated via Firebase token + email whitelist)
   app.use('/api/admin/auth', verifyAdminToken, adminAuthRouter);
+  app.use('/api/admin/stores', verifyAdminToken, adminStoresRouter);
 
   return app;
 }
