@@ -30,6 +30,7 @@ async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) 
       apiToken,
       apiVersion: config.shopifyApiVersion,
       email,
+      storeId: store.id,
     });
     for (const order of orders) {
       orderMap.set(order.shopify_order_id, order);

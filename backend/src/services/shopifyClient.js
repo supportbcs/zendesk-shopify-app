@@ -1,4 +1,6 @@
 const axios = require('axios');
+const { shopifyRateLimiter } = require('./rateLimiter');
+const { recordSuccess, recordError } = require('./storeHealthService');
 
 const GATEWAY_LABELS = {
   shopify_payments: 'Shopify Payments',
@@ -83,18 +85,36 @@ function normalizeOrder(order) {
   };
 }
 
-async function getOrdersByEmail({ shopifyDomain, apiToken, apiVersion, email }) {
+async function getOrdersByEmail({ shopifyDomain, apiToken, apiVersion, email, storeId }) {
   const url = `https://${shopifyDomain}/admin/api/${apiVersion}/orders.json`;
 
-  const response = await axios.get(url, {
-    params: { email, status: 'any', limit: 50 },
-    headers: {
-      'X-Shopify-Access-Token': apiToken,
-      'Content-Type': 'application/json',
-    },
-  });
+  // Use storeId for rate limiting; fall back to domain if not provided
+  const rateLimitKey = storeId || shopifyDomain;
 
-  return (response.data.orders || []).map(normalizeOrder);
+  return shopifyRateLimiter.schedule(rateLimitKey, async () => {
+    try {
+      const response = await axios.get(url, {
+        params: { email, status: 'any', limit: 50 },
+        headers: {
+          'X-Shopify-Access-Token': apiToken,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Record successful API call
+      if (storeId) {
+        await recordSuccess(storeId);
+      }
+
+      return (response.data.orders || []).map(normalizeOrder);
+    } catch (err) {
+      // Record failed API call
+      if (storeId) {
+        await recordError(storeId, err.message);
+      }
+      throw err;
+    }
+  });
 }
 
 module.exports = { getOrdersByEmail, normalizeOrder };

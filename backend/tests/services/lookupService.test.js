@@ -67,6 +67,7 @@ describe('lookupService', () => {
       apiToken: 'shpat_test123',
       apiVersion: '2025-01',
       email: 'john@example.com',
+      storeId: 'solitsocks',
     });
     expect(orderCacheService.cacheOrders).toHaveBeenCalled();
     expect(zendeskClient.updateTicketFields).toHaveBeenCalledWith('98765', [
