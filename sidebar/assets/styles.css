@@ -1,7 +1,152 @@
+/* Base */
 body {
   margin: 0;
   padding: 8px;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 13px;
   color: #2f3941;
+  line-height: 1.4;
+}
+
+/* Header */
+.header h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #03363d;
+}
+
+/* Fields (label + value pairs) */
+.field {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4px 0;
+  border-bottom: 1px solid #f3f3f3;
+}
+
+.field:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-weight: 600;
+  color: #68737d;
+  font-size: 12px;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.value {
+  text-align: right;
+  word-break: break-word;
+}
+
+.value.address {
+  text-align: right;
+  font-size: 12px;
+}
+
+/* Status badges */
+.badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge-open { background: #edf7ff; color: #1f73b7; }
+.badge-closed { background: #f8f9f9; color: #68737d; }
+.badge-cancelled { background: #fff0f1; color: #cc3340; }
+
+/* Order selector */
+.order-selector {
+  margin: 8px 0;
+}
+
+.order-selector select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 13px;
+  border: 1px solid #d8dcde;
+  border-radius: 4px;
+  background: #fff;
+}
+
+/* Order details section */
+.order-details {
+  margin: 8px 0;
+}
+
+/* Product list */
+.product-list {
+  list-style: none;
+  margin: 4px 0 0 0;
+  padding: 0;
+  text-align: right;
+}
+
+.product-list li {
+  font-size: 12px;
+  padding: 2px 0;
+}
+
+/* Tracking links */
+.field a {
+  color: #1f73b7;
+  text-decoration: none;
+}
+
+.field a:hover {
+  text-decoration: underline;
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 4px 0;
+}
+
+.actions .c-btn {
+  flex: 1;
+  text-align: center;
+  font-size: 12px;
+  padding: 6px 12px;
+  text-decoration: none;
+}
+
+/* Last synced */
+.last-synced {
+  text-align: center;
+  font-size: 11px;
+  color: #87929d;
+  margin-top: 4px;
+}
+
+/* State messages */
+.state-message {
+  text-align: center;
+  padding: 20px 8px;
+}
+
+.state-message p {
+  margin: 0 0 12px 0;
+  color: #68737d;
+}
+
+/* Loading spinner */
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #d8dcde;
+  border-top-color: #1f73b7;
+  border-radius: 50%;
+  margin: 0 auto 12px auto;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
