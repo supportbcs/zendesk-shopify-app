@@ -8,6 +8,7 @@ const config = {
   zendeskWebhookSecret: process.env.ZENDESK_WEBHOOK_SECRET,
   zendeskStoreFieldId: process.env.ZENDESK_STORE_FIELD_ID,
   zafSharedSecret: process.env.ZAF_SHARED_SECRET,
+  internalApiKey: process.env.INTERNAL_API_KEY,
 };
 
 const REQUIRED = [
@@ -18,6 +19,7 @@ const REQUIRED = [
   'ZENDESK_WEBHOOK_SECRET',
   'ZENDESK_STORE_FIELD_ID',
   'ZAF_SHARED_SECRET',
+  'INTERNAL_API_KEY',
 ];
 
 function validateConfig() {

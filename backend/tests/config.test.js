@@ -7,6 +7,7 @@ describe('config validation', () => {
     ZENDESK_WEBHOOK_SECRET: 'test-secret',
     ZENDESK_STORE_FIELD_ID: '12345',
     ZAF_SHARED_SECRET: 'test-zaf-secret',
+    INTERNAL_API_KEY: 'test-internal-key',
   };
 
   let originalEnv;

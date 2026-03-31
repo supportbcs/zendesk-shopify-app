@@ -11,6 +11,8 @@ const adminAuthRouter = require('./routes/admin/auth');
 const adminStoresRouter = require('./routes/admin/stores');
 const adminFieldMappingsRouter = require('./routes/admin/fieldMappings');
 const adminWebhookLogsRouter = require('./routes/admin/webhookLogs');
+const { verifyInternalApiKey } = require('./middleware/internalAuth');
+const internalUpdateTokenRouter = require('./routes/internal/updateToken');
 
 function createApp() {
   const app = express();
@@ -35,6 +37,9 @@ function createApp() {
   app.use('/api/admin/stores', verifyAdminToken, adminStoresRouter);
   app.use('/api/admin/field-mappings', verifyAdminToken, adminFieldMappingsRouter);
   app.use('/api/admin/webhook-logs', verifyAdminToken, adminWebhookLogsRouter);
+
+  // Internal API (authenticated via API key)
+  app.use('/api/internal/update-token', verifyInternalApiKey, internalUpdateTokenRouter);
 
   // Serve admin UI static files (production only — dev uses Vite proxy)
   const adminDistPath = path.join(__dirname, '..', 'admin', 'dist');
