@@ -30,10 +30,26 @@ async function createSecret(secretId, value) {
 async function updateSecret(secretId, value) {
   const parent = 'projects/' + config.gcpProjectId + '/secrets/' + secretId;
 
-  await client.addSecretVersion({
+  const [newVersion] = await client.addSecretVersion({
     parent,
     payload: { data: Buffer.from(value, 'utf8') },
   });
+
+  // Destroy all old versions to avoid accumulating billable versions
+  try {
+    const [versions] = await client.listSecretVersions({ parent });
+    for (const v of versions) {
+      if (v.name !== newVersion.name && v.state === 'ENABLED') {
+        await client.destroySecretVersion({
+          name: v.name,
+          etag: v.etag,
+        });
+      }
+    }
+  } catch (err) {
+    // Log but don't fail the update if cleanup fails
+    console.error('Failed to clean up old secret versions for', secretId, err.message);
+  }
 }
 
 async function deleteSecret(secretId) {

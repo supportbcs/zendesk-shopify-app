@@ -51,7 +51,7 @@ cd backend
 gcloud run deploy zendesk-shopify-backend --source . --region europe-west4 --project=bcs-internal \
   --allow-unauthenticated \
   --set-env-vars "GCP_PROJECT_ID=bcs-internal,SHOPIFY_API_VERSION=2025-01,ZENDESK_SUBDOMAIN=backbonecustomerservice,ZENDESK_EMAIL=zendesk@backbonecustomerservice.com,ZENDESK_STORE_FIELD_ID=18240308793116" \
-  --set-secrets "ZENDESK_API_TOKEN=zendesk-api-token:latest,ZENDESK_WEBHOOK_SECRET=zendesk-webhook-secret:latest,ZAF_SHARED_SECRET=zaf-shared-secret:latest"
+  --set-secrets "ZENDESK_API_TOKEN=zendesk-api-token:latest,ZENDESK_WEBHOOK_SECRET=zendesk-webhook-secret:latest,ZAF_SHARED_SECRET=zaf-shared-secret:latest,INTERNAL_API_KEY=internal-api-key:latest"
 ```
 
 **Live URL:** `https://zendesk-shopify-backend-708001607351.europe-west4.run.app`
