@@ -20,6 +20,8 @@ A requester name is updated when **any** condition is true:
 
 3. **Single-initial first name:** The first name is only one character. Example: "G Neale-RSG" should become "Gareth Neale" (using the full Shopify customer name).
 
+4. **Numeric name part:** Any part of the name consists of only digits. Example: "Jeni 7055" should become "Rand Hammoud" (using the full Shopify customer name).
+
 In all cases, the Shopify customer name is used (with proper capitalization). If Shopify has no `first_name`/`last_name`, the update is skipped.
 
 ## Natural Guard (No Tracking Needed)
