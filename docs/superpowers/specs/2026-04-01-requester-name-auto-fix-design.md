@@ -12,17 +12,19 @@ During the existing webhook flow, after Shopify orders are fetched, check if the
 
 ## Update Conditions
 
-A requester name is updated when **either** condition is true:
+A requester name is updated when **any** condition is true:
 
 1. **Auto-derived from email:** The requester name (case-insensitive) matches the local part of their email address. Example: email `yarek1331@gmail.com`, name is "Yarek1331" or "yarek1331".
 
-2. **Bad capitalization:** The name is not auto-derived, but the first letter of the first or last name is not capitalized. Example: "yarek jansen" should become "Yarek Jansen".
+2. **Bad capitalization:** The first letter of the first or last name is not capitalized. Example: "yarek jansen" should become "Yarek Jansen".
 
-In both cases, the Shopify customer name is used (with proper capitalization). If Shopify has no `first_name`/`last_name`, the update is skipped.
+3. **Single-initial first name:** The first name is only one character. Example: "G Neale-RSG" should become "Gareth Neale" (using the full Shopify customer name).
+
+In all cases, the Shopify customer name is used (with proper capitalization). If Shopify has no `first_name`/`last_name`, the update is skipped.
 
 ## Natural Guard (No Tracking Needed)
 
-Once a requester name is updated, it no longer matches the auto-derived heuristic, and its capitalization is correct. Future tickets from the same requester will pass both checks and be skipped. No Firestore flag or "already updated" tracking is needed.
+Once a requester name is updated, it no longer matches the auto-derived heuristic, its capitalization is correct, and the first name is no longer a single initial. Future tickets from the same requester will pass all three checks and be skipped. No Firestore flag or "already updated" tracking is needed.
 
 ## Data Flow
 
@@ -45,7 +47,7 @@ Webhook fires (existing)
 ### `backend/src/services/lookupService.js`
 - After fetching orders, get the requester's current name via `getUser()`
 - Extract `customer.first_name` and `customer.last_name` from the most recent order
-- Add helper `needsNameUpdate(currentName, email)` — returns true if auto-derived or badly cased
+- Add helper `needsNameUpdate(currentName, email)` — returns true if auto-derived, badly cased, or single-initial first name
 - Add helper `buildProperName(firstName, lastName)` — capitalizes first letters
 - If update needed, call `updateUser()` and include `requesterUpdated` in the return value
 
