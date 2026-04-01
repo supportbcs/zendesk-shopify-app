@@ -30,6 +30,8 @@ const SHOPIFY_ORDER = {
   tags: 'vip, repeat-customer',
   note: 'Please gift wrap',
   customer: {
+    first_name: 'John',
+    last_name: 'Doe',
     orders_count: 5,
     total_spent: '249.75',
   },
@@ -125,6 +127,8 @@ describe('shopifyClient', () => {
       billing_address: 'John Doe\nFactuurstraat 1\n1011 AB Amsterdam\nNetherlands',
       customer_orders_count: 5,
       customer_total_spent: '249.75',
+      customer_first_name: 'John',
+      customer_last_name: 'Doe',
       line_items: [
         { title: 'Black Crew Socks (M)', sku: 'BCS-M-001', quantity: 1, fulfillment_status: 'fulfilled' },
         { title: 'White Ankle Socks (L)', sku: 'WAS-L-002', quantity: 2, fulfillment_status: 'unfulfilled' },

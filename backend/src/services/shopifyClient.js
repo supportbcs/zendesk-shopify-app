@@ -81,6 +81,8 @@ function normalizeOrder(order) {
     billing_address: formatShippingAddress(order.billing_address),
     customer_orders_count: order.customer && order.customer.orders_count != null ? order.customer.orders_count : null,
     customer_total_spent: order.customer && order.customer.total_spent != null ? order.customer.total_spent : null,
+    customer_first_name: order.customer && order.customer.first_name ? order.customer.first_name : '',
+    customer_last_name: order.customer && order.customer.last_name ? order.customer.last_name : '',
     line_items: (order.line_items || []).map(item => ({
       title: [item.title, item.variant_title].filter(Boolean).join(' (') +
         (item.variant_title ? ')' : ''),
