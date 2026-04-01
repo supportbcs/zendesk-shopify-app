@@ -32,8 +32,13 @@ function hasInitialFirstName(name) {
   return firstName.length === 1;
 }
 
+function hasNumericNamePart(name) {
+  const parts = name.trim().split(/\s+/);
+  return parts.some(part => /^\d+$/.test(part));
+}
+
 function needsNameUpdate(currentName, email) {
-  return isNameAutoDerived(currentName, email) || hasWrongCapitalization(currentName) || hasInitialFirstName(currentName);
+  return isNameAutoDerived(currentName, email) || hasWrongCapitalization(currentName) || hasInitialFirstName(currentName) || hasNumericNamePart(currentName);
 }
 
 async function tryUpdateRequesterName(requesterId, currentName, email, orders) {
