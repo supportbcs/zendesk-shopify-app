@@ -23,6 +23,8 @@ describe('lookupService', () => {
     shopify_order_id: '6001234567890',
     order_name: '#1052',
     financial_status: 'paid',
+    customer_first_name: 'John',
+    customer_last_name: 'Doe',
   };
 
   const MOCK_MAPPINGS = [
@@ -37,6 +39,11 @@ describe('lookupService', () => {
     });
     zendeskClient.getUserEmails.mockResolvedValue(['john@example.com']);
     zendeskClient.updateTicketFields.mockResolvedValue();
+    zendeskClient.getUser.mockResolvedValue({
+      name: 'john',
+      email: 'john@example.com',
+    });
+    zendeskClient.updateUser.mockResolvedValue();
     storeService.getStoreByName.mockResolvedValue({
       id: 'solitsocks',
       store_name: 'SolitSocks',
@@ -99,5 +106,79 @@ describe('lookupService', () => {
 
     const result = await lookupOrdersForTicket('98765');
     expect(result.error).toBe('no_store_name');
+  });
+
+  test('updates requester name when auto-derived from email', async () => {
+    setupHappyPath();
+    zendeskClient.getUser.mockResolvedValue({
+      name: 'Yarek1331',
+      email: 'yarek1331@gmail.com',
+    });
+
+    const result = await lookupOrdersForTicket('98765');
+
+    expect(zendeskClient.updateUser).toHaveBeenCalledWith(11111, {
+      name: 'John Doe',
+    });
+    expect(result.requesterUpdated).toBe('Yarek1331 -> John Doe');
+  });
+
+  test('updates requester name when capitalization is wrong', async () => {
+    setupHappyPath();
+    zendeskClient.getUser.mockResolvedValue({
+      name: 'john doe',
+      email: 'john.doe@gmail.com',
+    });
+
+    const result = await lookupOrdersForTicket('98765');
+
+    expect(zendeskClient.updateUser).toHaveBeenCalledWith(11111, {
+      name: 'John Doe',
+    });
+    expect(result.requesterUpdated).toBe('john doe -> John Doe');
+  });
+
+  test('does not update requester name when already correct', async () => {
+    setupHappyPath();
+    zendeskClient.getUser.mockResolvedValue({
+      name: 'John Doe',
+      email: 'john.doe@gmail.com',
+    });
+
+    const result = await lookupOrdersForTicket('98765');
+
+    expect(zendeskClient.updateUser).not.toHaveBeenCalled();
+    expect(result.requesterUpdated).toBeUndefined();
+  });
+
+  test('does not update when Shopify has no customer name', async () => {
+    setupHappyPath();
+    shopifyClient.getOrdersByEmail.mockResolvedValue([{
+      ...MOCK_ORDER,
+      customer_first_name: '',
+      customer_last_name: '',
+    }]);
+    zendeskClient.getUser.mockResolvedValue({
+      name: 'yarek1331',
+      email: 'yarek1331@gmail.com',
+    });
+
+    const result = await lookupOrdersForTicket('98765');
+
+    expect(zendeskClient.updateUser).not.toHaveBeenCalled();
+    expect(result.requesterUpdated).toBeUndefined();
+  });
+
+  test('does not update when no orders found', async () => {
+    setupHappyPath();
+    shopifyClient.getOrdersByEmail.mockResolvedValue([]);
+    zendeskClient.getUser.mockResolvedValue({
+      name: 'yarek1331',
+      email: 'yarek1331@gmail.com',
+    });
+
+    const result = await lookupOrdersForTicket('98765');
+
+    expect(zendeskClient.updateUser).not.toHaveBeenCalled();
   });
 });

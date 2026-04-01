@@ -8,6 +8,51 @@ const orderCacheService = require('./orderCacheService');
 const { logger } = require('../logger');
 const lookupLogger = logger.child({ component: 'lookup' });
 
+function isNameAutoDerived(name, email) {
+  const localPart = email.split('@')[0];
+  return name.toLowerCase() === localPart.toLowerCase();
+}
+
+function hasWrongCapitalization(name) {
+  const parts = name.trim().split(/\s+/);
+  return parts.some(part => part.length > 0 && part[0] !== part[0].toUpperCase());
+}
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+function buildProperName(firstName, lastName) {
+  return [capitalize(firstName), capitalize(lastName)].filter(Boolean).join(' ');
+}
+
+function needsNameUpdate(currentName, email) {
+  return isNameAutoDerived(currentName, email) || hasWrongCapitalization(currentName);
+}
+
+async function tryUpdateRequesterName(requesterId, currentName, email, orders) {
+  if (orders.length === 0) return undefined;
+
+  const mostRecent = orders[0];
+  const firstName = mostRecent.customer_first_name;
+  const lastName = mostRecent.customer_last_name;
+
+  if (!firstName && !lastName) return undefined;
+  if (!needsNameUpdate(currentName, email)) return undefined;
+
+  const properName = buildProperName(firstName, lastName);
+
+  await zendeskClient.updateUser(requesterId, { name: properName });
+  lookupLogger.info('Updated requester name', {
+    requesterId,
+    oldName: currentName,
+    newName: properName,
+  });
+
+  return `${currentName} -> ${properName}`;
+}
+
 async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) {
   const ticket = await zendeskClient.getTicket(ticketId);
 
@@ -50,17 +95,32 @@ async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) 
     orders: allOrders,
   });
 
+  // Update requester name if needed
+  let requesterUpdated;
+  if (allOrders.length > 0) {
+    const user = await zendeskClient.getUser(ticket.requesterId);
+    requesterUpdated = await tryUpdateRequesterName(
+      ticket.requesterId, user.name, user.email, allOrders
+    );
+  }
+
   if (allOrders.length > 0) {
     const mappings = await fieldMappingService.getEnabledMappings();
     const fields = fieldMappingService.buildTicketFields(allOrders[0], mappings);
     await zendeskClient.updateTicketFields(String(ticketId), fields);
   }
 
-  return {
+  const result = {
     ticketId,
     storeName: store.store_name,
     ordersFound: allOrders.length,
   };
+
+  if (requesterUpdated) {
+    result.requesterUpdated = requesterUpdated;
+  }
+
+  return result;
 }
 
 module.exports = { lookupOrdersForTicket };
