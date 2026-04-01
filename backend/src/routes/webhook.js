@@ -51,6 +51,7 @@ router.post('/ticket-created', async (req, res) => {
         durationMs,
         ordersFound: result.ordersFound,
         error: null,
+        requesterUpdated: result.requesterUpdated || null,
       }).catch(() => {}); // Don't let log failure crash the webhook
     }
 
