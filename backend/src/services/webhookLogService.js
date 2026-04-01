@@ -3,7 +3,7 @@ const firestore = require('../firestore');
 const COLLECTION = 'webhook_logs';
 const MAX_LOGS = 100;
 
-async function logWebhookCall({ ticketId, storeName, status, durationMs, ordersFound, error }) {
+async function logWebhookCall({ ticketId, storeName, status, durationMs, ordersFound, error, requesterUpdated }) {
   const entry = {
     ticket_id: String(ticketId),
     store_name: storeName || null,
@@ -11,6 +11,7 @@ async function logWebhookCall({ ticketId, storeName, status, durationMs, ordersF
     duration_ms: durationMs,
     orders_found: ordersFound || 0,
     error: error || null,
+    requester_updated: requesterUpdated || null,
     timestamp: new Date().toISOString(),
   };
 

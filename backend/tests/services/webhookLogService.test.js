@@ -41,4 +41,37 @@ describe('webhookLogService', () => {
       })
     );
   });
+
+  test('includes requesterUpdated when provided', async () => {
+    const mockAdd = jest.fn().mockResolvedValue({ id: 'log2' });
+
+    firestore.collection = jest.fn().mockReturnValue({
+      add: mockAdd,
+      orderBy: jest.fn().mockReturnValue({
+        limit: jest.fn().mockReturnValue({
+          get: jest.fn().mockResolvedValue({ size: 50, docs: [] }),
+        }),
+      }),
+      count: jest.fn().mockReturnValue({
+        get: jest.fn().mockResolvedValue({ data: () => ({ count: 50 }) }),
+      }),
+    });
+
+    await logWebhookCall({
+      ticketId: '456',
+      storeName: 'TestStore',
+      status: 'success',
+      durationMs: 800,
+      ordersFound: 1,
+      error: null,
+      requesterUpdated: 'yarek1331 -> Yarek Jansen',
+    });
+
+    expect(mockAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ticket_id: '456',
+        requester_updated: 'yarek1331 -> Yarek Jansen',
+      })
+    );
+  });
 });
