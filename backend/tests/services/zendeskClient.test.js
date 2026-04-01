@@ -11,6 +11,8 @@ const {
   getTicket,
   getUserEmails,
   updateTicketFields,
+  getUser,
+  updateUser,
 } = require('../../src/services/zendeskClient');
 
 describe('zendeskClient', () => {
@@ -90,6 +92,45 @@ describe('zendeskClient', () => {
       expect(axios.put).toHaveBeenCalledWith(
         'https://testcompany.zendesk.com/api/v2/tickets/98765.json',
         { ticket: { custom_fields: fields } },
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('getUser', () => {
+    test('returns user name', async () => {
+      axios.get.mockResolvedValue({
+        data: {
+          user: {
+            id: 11111,
+            name: 'Yarek1331',
+            email: 'yarek1331@gmail.com',
+          },
+        },
+      });
+
+      const result = await getUser(11111);
+
+      expect(result).toEqual({
+        name: 'Yarek1331',
+        email: 'yarek1331@gmail.com',
+      });
+      expect(axios.get).toHaveBeenCalledWith(
+        'https://testcompany.zendesk.com/api/v2/users/11111.json',
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('updateUser', () => {
+    test('sends name update to Zendesk API', async () => {
+      axios.put.mockResolvedValue({ data: {} });
+
+      await updateUser(11111, { name: 'Yarek Jansen' });
+
+      expect(axios.put).toHaveBeenCalledWith(
+        'https://testcompany.zendesk.com/api/v2/users/11111.json',
+        { user: { name: 'Yarek Jansen' } },
         expect.any(Object)
       );
     });

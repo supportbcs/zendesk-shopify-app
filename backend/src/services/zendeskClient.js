@@ -43,4 +43,23 @@ async function updateTicketFields(ticketId, customFields) {
   );
 }
 
-module.exports = { getTicket, getUserEmails, updateTicketFields };
+async function getUser(userId) {
+  const { base, auth } = zendeskApi();
+  const response = await axios.get(`${base}/users/${userId}.json`, { auth });
+  const user = response.data.user;
+  return {
+    name: user.name,
+    email: user.email,
+  };
+}
+
+async function updateUser(userId, { name }) {
+  const { base, auth } = zendeskApi();
+  await axios.put(
+    `${base}/users/${userId}.json`,
+    { user: { name } },
+    { auth }
+  );
+}
+
+module.exports = { getTicket, getUserEmails, updateTicketFields, getUser, updateUser };
