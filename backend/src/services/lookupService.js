@@ -27,8 +27,13 @@ function buildProperName(firstName, lastName) {
   return [capitalize(firstName), capitalize(lastName)].filter(Boolean).join(' ');
 }
 
+function hasInitialFirstName(name) {
+  const firstName = name.trim().split(/\s+/)[0];
+  return firstName.length === 1;
+}
+
 function needsNameUpdate(currentName, email) {
-  return isNameAutoDerived(currentName, email) || hasWrongCapitalization(currentName);
+  return isNameAutoDerived(currentName, email) || hasWrongCapitalization(currentName) || hasInitialFirstName(currentName);
 }
 
 async function tryUpdateRequesterName(requesterId, currentName, email, orders) {

@@ -138,6 +138,21 @@ describe('lookupService', () => {
     expect(result.requesterUpdated).toBe('john doe -> John Doe');
   });
 
+  test('updates requester name when first name is just an initial', async () => {
+    setupHappyPath();
+    zendeskClient.getUser.mockResolvedValue({
+      name: 'G Neale-RSG',
+      email: 'g.neale@example.com',
+    });
+
+    const result = await lookupOrdersForTicket('98765');
+
+    expect(zendeskClient.updateUser).toHaveBeenCalledWith(11111, {
+      name: 'John Doe',
+    });
+    expect(result.requesterUpdated).toBe('G Neale-RSG -> John Doe');
+  });
+
   test('does not update requester name when already correct', async () => {
     setupHappyPath();
     zendeskClient.getUser.mockResolvedValue({
