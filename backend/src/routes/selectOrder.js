@@ -1,6 +1,6 @@
 const express = require('express');
 const { getCachedOrders, updateSelectedOrder } = require('../services/orderCacheService');
-const { getEnabledMappings, buildTicketFields } = require('../services/fieldMappingService');
+const { getEnabledMappings, buildTicketFields, buildProductTags } = require('../services/fieldMappingService');
 const { updateTicketFields } = require('../services/zendeskClient');
 
 const router = express.Router();
@@ -27,7 +27,8 @@ router.post('/', async (req, res) => {
 
     const mappings = await getEnabledMappings();
     const fields = buildTicketFields(order, mappings);
-    await updateTicketFields(String(ticketId), fields);
+    const productTags = buildProductTags(order);
+    await updateTicketFields(String(ticketId), fields, { additionalTags: productTags });
 
     res.json({ status: 'ok', selectedOrderId: orderId });
   } catch (err) {

@@ -3,6 +3,7 @@ const firestore = require('../../src/firestore');
 const {
   getEnabledMappings,
   buildTicketFields,
+  buildProductTags,
 } = require('../../src/services/fieldMappingService');
 
 const MOCK_MAPPINGS = {
@@ -60,6 +61,41 @@ describe('fieldMappingService', () => {
       { id: '100', value: '#1052' },
       { id: '101', value: 'paid' },
     ]);
+  });
+
+  test('buildProductTags normalizes product titles to tags', () => {
+    const tags = buildProductTags(MOCK_ORDER);
+    expect(tags).toEqual(['product-black-crew-socks-m', 'product-white-ankle-socks-l']);
+  });
+
+  test('buildProductTags skips empty titles and limits to 5 items', () => {
+    const order = {
+      line_items: [
+        { title: 'Red Hoodie', sku: 'P1', quantity: 1 },
+        { title: '', sku: 'P2', quantity: 1 },
+        { title: 'Blue Jeans', sku: 'P3', quantity: 1 },
+        { title: null, sku: 'P4', quantity: 1 },
+        { title: 'Green Cap', sku: 'P5', quantity: 1 },
+        { title: 'Sixth Item (should be excluded)', sku: 'P6', quantity: 1 },
+      ],
+    };
+    const tags = buildProductTags(order);
+    expect(tags).toEqual(['product-red-hoodie', 'product-blue-jeans', 'product-green-cap']);
+  });
+
+  test('buildProductTags strips special characters', () => {
+    const order = {
+      line_items: [
+        { title: 'Söcks & Shoes (50% off!)', sku: '', quantity: 1 },
+      ],
+    };
+    const tags = buildProductTags(order);
+    expect(tags).toEqual(['product-scks-shoes-50-off']);
+  });
+
+  test('buildProductTags returns empty array when no line items', () => {
+    expect(buildProductTags({})).toEqual([]);
+    expect(buildProductTags({ line_items: [] })).toEqual([]);
   });
 
   test('buildTicketFields handles line items', () => {

@@ -46,4 +46,22 @@ function buildTicketFields(order, mappings) {
   }));
 }
 
-module.exports = { getEnabledMappings, buildTicketFields };
+function normalizeTag(str) {
+  return str
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function buildProductTags(order) {
+  const items = (order.line_items || []).slice(0, 5);
+  return items
+    .map(item => item.title)
+    .filter(Boolean)
+    .map(title => 'product-' + normalizeTag(title))
+    .filter(tag => tag.length > 'product-'.length);
+}
+
+module.exports = { getEnabledMappings, buildTicketFields, buildProductTags };

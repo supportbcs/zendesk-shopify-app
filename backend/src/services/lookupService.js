@@ -117,7 +117,8 @@ async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) 
   if (allOrders.length > 0) {
     const mappings = await fieldMappingService.getEnabledMappings();
     const fields = fieldMappingService.buildTicketFields(allOrders[0], mappings);
-    await zendeskClient.updateTicketFields(String(ticketId), fields);
+    const productTags = fieldMappingService.buildProductTags(allOrders[0]);
+    await zendeskClient.updateTicketFields(String(ticketId), fields, { additionalTags: productTags });
   }
 
   const result = {

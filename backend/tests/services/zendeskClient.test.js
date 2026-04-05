@@ -95,6 +95,43 @@ describe('zendeskClient', () => {
         expect.any(Object)
       );
     });
+
+    test('reads current tags and merges with additionalTags', async () => {
+      axios.get.mockResolvedValue({
+        data: { ticket: { tags: ['existing-tag', 'shop_name_test'] } },
+      });
+      axios.put.mockResolvedValue({ data: {} });
+
+      const fields = [{ id: '12345', value: '#1052' }];
+      const tags = ['product-black-crew-socks', 'existing-tag'];
+
+      await updateTicketFields('98765', fields, { additionalTags: tags });
+
+      expect(axios.get).toHaveBeenCalledWith(
+        'https://testcompany.zendesk.com/api/v2/tickets/98765.json',
+        expect.any(Object)
+      );
+      expect(axios.put).toHaveBeenCalledWith(
+        'https://testcompany.zendesk.com/api/v2/tickets/98765.json',
+        { ticket: { custom_fields: fields, tags: ['existing-tag', 'shop_name_test', 'product-black-crew-socks'] } },
+        expect.any(Object)
+      );
+    });
+
+    test('skips tag fetch when additionalTags is empty', async () => {
+      axios.put.mockResolvedValue({ data: {} });
+
+      const fields = [{ id: '12345', value: '#1052' }];
+
+      await updateTicketFields('98765', fields, { additionalTags: [] });
+
+      expect(axios.get).not.toHaveBeenCalled();
+      expect(axios.put).toHaveBeenCalledWith(
+        'https://testcompany.zendesk.com/api/v2/tickets/98765.json',
+        { ticket: { custom_fields: fields } },
+        expect.any(Object)
+      );
+    });
   });
 
   describe('getUser', () => {

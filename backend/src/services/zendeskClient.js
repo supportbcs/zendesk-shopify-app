@@ -34,11 +34,19 @@ async function getUserEmails(userId) {
     .map(i => i.value);
 }
 
-async function updateTicketFields(ticketId, customFields) {
+async function updateTicketFields(ticketId, customFields, { additionalTags } = {}) {
   const { base, auth } = zendeskApi();
+  const ticket = { custom_fields: customFields };
+
+  if (additionalTags && additionalTags.length > 0) {
+    const response = await axios.get(`${base}/tickets/${ticketId}.json`, { auth });
+    const currentTags = response.data.ticket.tags || [];
+    ticket.tags = [...new Set([...currentTags, ...additionalTags])];
+  }
+
   await axios.put(
     `${base}/tickets/${ticketId}.json`,
-    { ticket: { custom_fields: customFields } },
+    { ticket },
     { auth }
   );
 }

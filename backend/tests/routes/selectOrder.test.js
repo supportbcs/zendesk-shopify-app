@@ -40,6 +40,7 @@ describe('POST /api/select-order', () => {
     fieldMappingService.buildTicketFields.mockReturnValue([
       { id: '100', value: '#2' },
     ]);
+    fieldMappingService.buildProductTags.mockReturnValue([]);
     zendeskClient.updateTicketFields.mockResolvedValue();
 
     const res = await request(app)

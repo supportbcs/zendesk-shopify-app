@@ -57,6 +57,7 @@ describe('lookupService', () => {
     fieldMappingService.buildTicketFields.mockReturnValue([
       { id: '100', value: '#1052' },
     ]);
+    fieldMappingService.buildProductTags.mockReturnValue(['product-black-crew-socks']);
     orderCacheService.cacheOrders.mockResolvedValue();
   }
 
@@ -79,7 +80,7 @@ describe('lookupService', () => {
     expect(orderCacheService.cacheOrders).toHaveBeenCalled();
     expect(zendeskClient.updateTicketFields).toHaveBeenCalledWith('98765', [
       { id: '100', value: '#1052' },
-    ]);
+    ], { additionalTags: ['product-black-crew-socks'] });
     expect(result.ordersFound).toBe(1);
   });
 
