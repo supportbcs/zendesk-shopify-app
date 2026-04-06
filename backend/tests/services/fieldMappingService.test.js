@@ -65,7 +65,7 @@ describe('fieldMappingService', () => {
 
   test('buildProductTags normalizes product titles to tags', () => {
     const tags = buildProductTags(MOCK_ORDER);
-    expect(tags).toEqual(['product-black-crew-socks-m', 'product-white-ankle-socks-l']);
+    expect(tags).toEqual(['product-black-crew-socks-m', 'product-white-ankle-socks-l', 'has-product-data']);
   });
 
   test('buildProductTags skips empty titles and limits to 5 items', () => {
@@ -80,7 +80,7 @@ describe('fieldMappingService', () => {
       ],
     };
     const tags = buildProductTags(order);
-    expect(tags).toEqual(['product-red-hoodie', 'product-blue-jeans', 'product-green-cap']);
+    expect(tags).toEqual(['product-red-hoodie', 'product-blue-jeans', 'product-green-cap', 'has-product-data']);
   });
 
   test('buildProductTags strips special characters', () => {
@@ -90,7 +90,7 @@ describe('fieldMappingService', () => {
       ],
     };
     const tags = buildProductTags(order);
-    expect(tags).toEqual(['product-scks-shoes-50-off']);
+    expect(tags).toEqual(['product-scks-shoes-50-off', 'has-product-data']);
   });
 
   test('buildProductTags returns empty array when no line items', () => {

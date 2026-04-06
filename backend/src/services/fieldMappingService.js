@@ -57,11 +57,15 @@ function normalizeTag(str) {
 
 function buildProductTags(order) {
   const items = (order.line_items || []).slice(0, 5);
-  return items
+  const tags = items
     .map(item => item.title)
     .filter(Boolean)
     .map(title => 'product-' + normalizeTag(title))
     .filter(tag => tag.length > 'product-'.length);
+  if (tags.length > 0) {
+    tags.push('has-product-data');
+  }
+  return tags;
 }
 
 module.exports = { getEnabledMappings, buildTicketFields, buildProductTags };
