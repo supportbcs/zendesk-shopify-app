@@ -94,6 +94,8 @@ function normalizeOrder(order) {
 }
 
 async function getOrdersByEmail({ shopifyDomain, apiToken, apiVersion, email, storeId }) {
+  if (!email) return [];
+
   const baseUrl = `https://${shopifyDomain}/admin/api/${apiVersion}`;
   const rateLimitKey = storeId || shopifyDomain;
   const headers = {

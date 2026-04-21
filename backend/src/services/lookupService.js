@@ -75,8 +75,13 @@ async function lookupOrdersForTicket(ticketId, { emails: overrideEmails } = {}) 
     return { error: 'store_not_found', ticketId, storeName: ticket.storeName };
   }
 
-  const customerEmails = overrideEmails ||
-    await zendeskClient.getUserEmails(ticket.requesterId);
+  const customerEmails = (overrideEmails ||
+    await zendeskClient.getUserEmails(ticket.requesterId))
+    .filter(email => email);
+
+  if (customerEmails.length === 0) {
+    return { error: 'no_customer_emails', ticketId };
+  }
 
   const apiToken = await secretManager.getSecret(store.secret_name);
 
